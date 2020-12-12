@@ -51,7 +51,7 @@ public class EmployeeController {
     @PutMapping("/employees/{id}")
     public ResponseEntity<?> replaceEmployee(@RequestBody Employee newEmployee, @PathVariable Long id) {
 
-        Employee updatedEmployee = employeeRepository.findById(id) //
+        Employee updatedEmployee = employeeRepository.findById(id)
                 .map(employee -> {
                     employee.setName(newEmployee.getName());
                     employee.setRole(newEmployee.getRole());
@@ -63,9 +63,8 @@ public class EmployeeController {
                 });
 
         EntityModel<Employee> entityModel = employeeModelAssembler.toModel(updatedEmployee);
-
-        return ResponseEntity //
-                .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()) //
+        return ResponseEntity
+                .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
                 .body(entityModel);
     }
 
