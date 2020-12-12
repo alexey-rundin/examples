@@ -3,6 +3,8 @@ package ru.rundin.examples.hateoasrest.web;
 import lombok.AllArgsConstructor;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.IanaLinkRelations;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.rundin.examples.hateoasrest.entity.Employee;
 import ru.rundin.examples.hateoasrest.error.EmployeeNotFoundException;
@@ -35,8 +37,9 @@ public class EmployeeController {
     }
 
     @PostMapping("/employees")
-    public Employee newEmployee(@RequestBody Employee newEmployee) {
-        return employeeRepository.save(newEmployee);
+    public ResponseEntity<?> newEmployee(@RequestBody Employee newEmployee) {
+        EntityModel<Employee> entityModel = employeeModelAssembler.toModel(employeeRepository.save(newEmployee));
+        return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
     }
 
     @GetMapping("/employees/{id}")
@@ -46,21 +49,29 @@ public class EmployeeController {
     }
 
     @PutMapping("/employees/{id}")
-    public Employee replaceEmployee(@RequestBody Employee newEmployee, @PathVariable Long id) {
-        return employeeRepository.findById(id)
+    public ResponseEntity<?> replaceEmployee(@RequestBody Employee newEmployee, @PathVariable Long id) {
+
+        Employee updatedEmployee = employeeRepository.findById(id) //
                 .map(employee -> {
                     employee.setName(newEmployee.getName());
                     employee.setRole(newEmployee.getRole());
-                    return employeeRepository.save(newEmployee);
-                })
+                    return employeeRepository.save(employee);
+                }) //
                 .orElseGet(() -> {
                     newEmployee.setId(id);
                     return employeeRepository.save(newEmployee);
                 });
+
+        EntityModel<Employee> entityModel = employeeModelAssembler.toModel(updatedEmployee);
+
+        return ResponseEntity //
+                .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()) //
+                .body(entityModel);
     }
 
     @DeleteMapping("/employees/{id}")
-    public void deleteEmployee(@PathVariable Long id) {
+    public ResponseEntity<?> deleteEmployee(@PathVariable Long id) {
         employeeRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }
